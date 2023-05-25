@@ -1,5 +1,7 @@
+using System.Runtime.InteropServices.WindowsRuntime;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CharacterMovement : NetworkBehaviour
 {
@@ -11,6 +13,8 @@ public class CharacterMovement : NetworkBehaviour
     private Animator anim;
 
     private bool facingRight = true;
+
+    private RaycastHit2D[] buffer = new RaycastHit2D[32];
 
     private static readonly int Running = Animator.StringToHash("running");
 
@@ -43,6 +47,8 @@ public class CharacterMovement : NetworkBehaviour
         }
 
         MoveCommandServerRpc(moveVector, jump);
+        if (!IsServer)
+            MoveCommand(moveVector, jump);
     }
 
     void LookRight(bool right)
@@ -56,6 +62,11 @@ public class CharacterMovement : NetworkBehaviour
     [ServerRpc]
     void MoveCommandServerRpc(Vector2 moveVector, bool jump)
     {
+        MoveCommand(moveVector, jump);
+    }
+
+    void MoveCommand(Vector2 moveVector, bool jump)
+    {
         rb.velocity = new Vector2(moveVector.x * moveSpeed, rb.velocity.y);
         if (moveVector != Vector2.zero)
         {
@@ -67,22 +78,43 @@ public class CharacterMovement : NetworkBehaviour
             anim.SetBool(Running, false);
         }
 
-        if (jump && (CheckFloor() || CheckWall()))
+        Bounds b = GetComponentInChildren<Collider2D>().bounds;
+        Ray2D rayDown = new Ray2D(new Vector2(b.center.x, b.min.y), Vector3.down);
+        Ray2D rayLeft = new Ray2D(new Vector2(b.max.x + 0.01f, b.center.y), Vector3.right);
+        Ray2D rayRight = new Ray2D(new Vector2(b.min.x - 0.01f, b.center.y), Vector3.left);
+
+        if (
+            jump && (
+                RaycastUtil.CheckRay(transform, rayDown) ||
+                RaycastUtil.CheckRay(transform, rayLeft) ||
+                RaycastUtil.CheckRay(transform, rayRight)
+            )
+        )
         {
             rb.AddForce(transform.up * jumpForce, ForceMode2D.Force);
         }
     }
+}
 
-    bool CheckFloor()
+public class RaycastUtil
+{
+    private static RaycastHit2D[] buffer = new RaycastHit2D[64];
+
+    public static Collider2D RayHit(Transform transform, Ray2D ray)
     {
-        Bounds b = GetComponentInChildren<Collider2D>().bounds;
-        return Physics2D.Raycast(new Vector2(b.center.x, b.min.y), Vector3.down, 0.1f);
+        int numHits = Physics2D.RaycastNonAlloc(ray.origin, ray.direction, buffer, 0.1f);
+        for (int i = 0; i < numHits; i++)
+        {
+            if (buffer[i].collider.transform.IsChildOf(transform))
+                continue;
+            return buffer[i].collider;
+        }
+
+        return null;
     }
-
-    bool CheckWall()
+    
+    public static bool CheckRay(Transform transform, Ray2D ray)
     {
-        Bounds b = GetComponentInChildren<Collider2D>().bounds;
-        return Physics2D.Raycast(new Vector2(b.max.x + 0.01f, b.center.y), Vector3.right, 0.1f) ||
-               Physics2D.Raycast(new Vector2(b.min.x - 0.01f, b.center.y), Vector3.left, 0.1f);
+        return RayHit(transform, ray) != null;
     }
 }

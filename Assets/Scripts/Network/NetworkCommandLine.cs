@@ -9,7 +9,6 @@ public class NetworkCommandLine : MonoBehaviour
 
     void Start()
     {
-        Debug.Log("NetworkManagerStart");
         netManager = GetComponentInParent<NetworkManager>();
 
         if (Application.isEditor) return;

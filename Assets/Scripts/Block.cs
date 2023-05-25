@@ -32,7 +32,7 @@ public class Block : NetworkBehaviour
                 yield return new WaitForEndOfFrame();
                 continue;
             }
-            
+
             Setup(parentParser.DistinctSprites);
             yield break;
         }
@@ -82,7 +82,7 @@ public class Block : NetworkBehaviour
             GetComponent<Destructable>().enabled = false;
             return;
         }
-        
+
         if (shouldCollide.Value)
         {
             GetComponent<Rigidbody2D>().bodyType = rigidbodyType.Value;
@@ -101,5 +101,9 @@ public class Block : NetworkBehaviour
         {
             Destroy(GetComponent<Destructable>());
         }
+    }
+
+    private void Die()
+    {
     }
 }

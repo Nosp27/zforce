@@ -3,9 +3,8 @@ using UnityEngine;
 
 public class Destructable : NetworkBehaviour
 {
-    [SerializeField] private float destructionDelay = 0.1f;
-    [SerializeField] private int maxHealth = 10;
-    private NetworkVariable<int> health = new NetworkVariable<int>(0);
+    [SerializeField] protected int maxHealth = 10;
+    protected NetworkVariable<int> health = new NetworkVariable<int>(0);
     public int Health => health.Value;
 
     public override void OnNetworkSpawn()
@@ -30,9 +29,13 @@ public class Destructable : NetworkBehaviour
         {
             health.Value = 0;
             DieClientRpc();
-            if (destructionDelay >= 0)
-                gameObject.GetComponent<NetworkObject>().Despawn();
+            Kill();
         }
+    }
+
+    protected virtual void Kill()
+    {
+        gameObject.GetComponent<NetworkObject>().Despawn();
     }
 
     [ClientRpc]
