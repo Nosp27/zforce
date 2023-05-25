@@ -1,5 +1,7 @@
+using System;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,9 +16,14 @@ public class CharacterMovement : NetworkBehaviour
 
     private bool facingRight = true;
 
-    private RaycastHit2D[] buffer = new RaycastHit2D[32];
-
     private static readonly int Running = Animator.StringToHash("running");
+
+    private Vector2 moveVector;
+    private bool jump;
+    private bool inputProcessed;
+
+    [SerializeField] private float positionSyncThreshold = 0.01f;
+    private NetworkVariable<Vector2> serverPosition = new NetworkVariable<Vector2>();
 
     void Start()
     {
@@ -24,14 +31,13 @@ public class CharacterMovement : NetworkBehaviour
         rb = GetComponent<Rigidbody2D>();
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (!IsOwner)
             return;
 
-        bool jump = false;
-        Vector2 moveVector = Vector2.zero;
+        moveVector = Vector2.zero;
+        jump = false;
         if (Input.GetKey(KeyCode.D))
         {
             moveVector = Vector2.right;
@@ -48,7 +54,13 @@ public class CharacterMovement : NetworkBehaviour
 
         MoveCommandServerRpc(moveVector, jump);
         if (!IsServer)
+        {
             MoveCommand(moveVector, jump);
+            if (Vector2.Distance(transform.position, serverPosition.Value) > positionSyncThreshold)
+            {
+                transform.position = serverPosition.Value;
+            }
+        }
     }
 
     void LookRight(bool right)
@@ -63,6 +75,7 @@ public class CharacterMovement : NetworkBehaviour
     void MoveCommandServerRpc(Vector2 moveVector, bool jump)
     {
         MoveCommand(moveVector, jump);
+        serverPosition.Value = transform.position;
     }
 
     void MoveCommand(Vector2 moveVector, bool jump)
@@ -112,7 +125,7 @@ public class RaycastUtil
 
         return null;
     }
-    
+
     public static bool CheckRay(Transform transform, Ray2D ray)
     {
         return RayHit(transform, ray) != null;
