@@ -1,21 +1,23 @@
-using System.Security.Cryptography;
 using Unity.Netcode;
 using UnityEngine;
 
 public class Grenade : NetworkBehaviour
 {
-    [SerializeField] private float ttl = 2f;
+    [SerializeField] private float ttl = 10f;
+    [SerializeField] private float ttlAfterCollision = 2f;
     [SerializeField] private float explosionRadius = 5f;
     [SerializeField] private float maxExplosionDamage = 30f;
     [SerializeField] private float minExplosionDamage = 3f;
     [SerializeField] private GameObject explosionParticlesPrefab;
-    private float startTime;
     private bool exploded;
+
+    private bool collisionProcessed;
+    private float explosionTime;
 
     public override void OnNetworkSpawn()
     {
         print("Grenade init");
-        startTime = Time.time;
+        explosionTime = Time.time + ttl;
     }
 
     void Update()
@@ -23,11 +25,20 @@ public class Grenade : NetworkBehaviour
         if (!IsServer)
             return;
 
-        if (!exploded && startTime + ttl < Time.time)
+        if (!exploded && explosionTime < Time.time)
         {
             print("EXPLoDE");
             exploded = true;
             Explode();
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D col)
+    {
+        if (!collisionProcessed && col.gameObject.GetComponent<Block>() != null)
+        {
+            collisionProcessed = true;
+            explosionTime = Time.time + ttlAfterCollision;
         }
     }
 

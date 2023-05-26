@@ -230,8 +230,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e8fabd19b7f94e888ebf37b9edb7813, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ttl: 2
-  explosionRadius: 5
+  ttl: 10
+  ttlAfterCollision: 2
+  explosionRadius: 3
   maxExplosionDamage: 150
   minExplosionDamage: 15
   explosionParticlesPrefab: {fileID: 9039318883470137549, guid: 403f4fd99e32d4ca28f946148c9b1f57, type: 3}

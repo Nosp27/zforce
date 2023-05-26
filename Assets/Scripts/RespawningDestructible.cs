@@ -1,4 +1,7 @@
+using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class RespawningDestructible : Destructable
 {
@@ -6,10 +9,23 @@ public class RespawningDestructible : Destructable
     {
         if (!IsServer)
             return;
-        
+        OnKill.Invoke();
+        Respawn();
+    }
+
+    [ServerRpc]
+    public void RespawnServerRpc()
+    {
+        Respawn();
+    }
+
+    void Respawn()
+    {
         GameObject[] spawnPoints = GameObject.FindGameObjectsWithTag("PlayerSpawn");
         int idx = Random.Range(0, spawnPoints.Length);
         health.Value = maxHealth;
-        transform.position = spawnPoints[idx].transform.position;
+        GetComponent<NetworkTransform>().Teleport(
+            spawnPoints[idx].transform.position, transform.rotation, transform.localScale
+        );
     }
 }

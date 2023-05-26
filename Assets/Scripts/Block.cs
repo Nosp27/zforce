@@ -33,7 +33,7 @@ public class Block : NetworkBehaviour
                 continue;
             }
 
-            Setup(parentParser.DistinctSprites);
+            Setup(parentParser.spriteLibrary);
             yield break;
         }
     }
@@ -73,9 +73,9 @@ public class Block : NetworkBehaviour
         rigidbodyType.Value = adapter.rigidbodyType;
     }
 
-    private void Setup(Sprite[] distinctSprites)
+    private void Setup(SpriteLibrary library)
     {
-        GetComponent<SpriteRenderer>().sprite = distinctSprites[spriteIdx.Value];
+        GetComponent<SpriteRenderer>().sprite = library.GetSpriteById(spriteIdx.Value);
         if (!IsServer)
         {
             GetComponent<Collider2D>().enabled = false;

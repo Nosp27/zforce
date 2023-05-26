@@ -9,9 +9,9 @@ public class DeathZone : NetworkBehaviour
         {
             return;
         }
-        print("CollisionDetected");
 
         Destructable dest = col.GetComponentInParent<Destructable>();
-        dest.GetDamage(dest.Health);
+        if (dest)
+            dest.GetDamage(dest.Health);
     }
 }

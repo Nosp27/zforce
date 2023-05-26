@@ -11,20 +11,12 @@ public class Character : NetworkBehaviour
 
     public FixedString32Bytes Faction => faction.Value;
 
-    public override void OnNetworkSpawn()
-    {
-    }
-
     private IEnumerator Start()
     {
         if (IsOwner)
         {
             GameObject.Find("CM vcam1").GetComponent<CinemachineVirtualCamera>().Follow = transform;
-        }
-        
-        if (IsServer)
-        {
-            GetComponent<Destructable>().GetDamage(10);
+            GetComponent<RespawningDestructible>().RespawnServerRpc();
         }
 
         while (true)
